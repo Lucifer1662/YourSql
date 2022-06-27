@@ -4,6 +4,7 @@
 #include <string>
 #include "Row.h"
 #include "fields/Schema.h"
+#include "RowConversion.h"
 
 
 
@@ -13,6 +14,7 @@ struct ITable
 	virtual void insert(Page& page, std::vector<std::string> values) {}
 	virtual void insert(Page& page, Row& rowToCopy) {}
 	virtual void insert(Row& rowToCopy) {}
+	virtual void insert(Row& rowToCopy, RowConversion& rowConversion) {}
 	virtual void insert(std::vector<std::string> values) {}
 
 	virtual void update(Page& page, size_t index, std::vector<std::string> values) {}

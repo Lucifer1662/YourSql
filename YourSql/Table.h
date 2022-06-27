@@ -15,18 +15,18 @@
 
 
 
-class DBTable : public ITable {
+class Table : public ITable {
 	std::shared_ptr<Schema> schema;
 	std::string tableName;
 	std::unordered_map<size_t, std::shared_ptr<Page>> pages;
 	size_t freePage;
 public:
-	DBTable(std::string tableName, std::shared_ptr<Schema> schema,
+	Table(std::string tableName, std::shared_ptr<Schema> schema,
 		std::unordered_map<size_t, std::shared_ptr<Page>> pages = {},
 		size_t freePage = 0)
 		: tableName(tableName), schema(schema), pages(pages), freePage(freePage) {}
 
-	DBTable(DBTable&&) = default;
+	Table(Table&&) = default;
 
 	void insert(Page& page, std::vector<std::string> values) {
 
@@ -51,11 +51,19 @@ public:
 		insert(*page, rowToCopy);
 	}
 
+	virtual void insert(Row& rowToCopy, RowConversion& rowConversion) override {
+		auto page = getFreePage();
+		auto row = genRow();
+		row.setData(page->getEndData());
+		page->addLength(row.getContiguousSize());
+		rowConversion.convert(rowToCopy, row);
+	}
+
 	std::shared_ptr<Page> getFreePage() {
 		return readPage(freePage);
 	}
 
-	void insert(std::vector<std::string> values) {
+	void insert(std::vector<std::string> values) override {
 		auto page = getFreePage();
 
 		auto row = genRow();
@@ -64,6 +72,8 @@ public:
 
 		row.updateData(values);
 	}
+
+	
 
 	void update(Page& page, size_t index, std::vector<std::string> values) {
 
@@ -112,7 +122,7 @@ public:
 		return page;
 	}
 
-	static std::optional<DBTable> createTable(std::string tableName);
+	static std::optional<Table> createTable(std::string tableName);
 
 	Schema& getSchema() { return *schema; }
 
@@ -124,12 +134,12 @@ public:
 		using pointer = Row*;  // or also value_type*
 		using reference = Row&;  // or also value_type&
 
-		Iterator(DBTable& table) :table(table), Row(table.getSchema().generateFields()) {
+		Iterator(Table& table) :table(table), Row(table.getSchema().generateFields()) {
 			table.nextPage(page);
 			setData(page->getStartData());
 		}
 
-		Iterator(DBTable& table, std::shared_ptr<Page> page, char* data) :table(table),
+		Iterator(Table& table, std::shared_ptr<Page> page, char* data) :table(table),
 			page(page), Row(table.getSchema().generateFields()) {
 			setData(data);
 		}
@@ -138,7 +148,7 @@ public:
 		Iterator(Iterator&&) = default;
 		Iterator& operator=(const Iterator&) = default;
 
-		DBTable& table;
+		Table& table;
 		std::shared_ptr<Page> page;
 
 		reference operator*() { return *this; }

@@ -36,6 +36,10 @@ public:
 
 	virtual std::shared_ptr<Value> value() = 0;
 
+	void copyFromSelf(Field& field) {
+		memcpy(getData(), field.getData(), contiguousSize());
+	}
+
 
 	template<typename T>
 	T* data() const {

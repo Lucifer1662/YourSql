@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -148,10 +148,13 @@
     <ClCompile Include="expression\Value.cpp" />
     <ClCompile Include="fields\Field.cpp" />
     <ClCompile Include="fields\Int32Field.cpp" />
+    <ClCompile Include="fields\SchemaFactory.cpp" />
     <ClCompile Include="ITable.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Page.cpp" />
     <ClCompile Include="Row.cpp" />
+    <ClCompile Include="RowConversion.cpp" />
+    <ClCompile Include="Table.cpp" />
     <ClCompile Include="TableFactory.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -176,7 +179,9 @@
     <ClInclude Include="ITable.h" />
     <ClInclude Include="Page.h" />
     <ClInclude Include="Row.h" />
+    <ClInclude Include="RowConversion.h" />
     <ClInclude Include="sql\SqlFactory.h" />
+    <ClInclude Include="DBTable.h" />
     <ClInclude Include="Table.h" />
     <ClInclude Include="TableFactory.h" />
     <ClInclude Include="util.h" />

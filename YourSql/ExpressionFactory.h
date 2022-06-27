@@ -8,23 +8,37 @@
 #include "expression/Number.h"
 #include "util.h"
 
+struct CreateContext {
+	std::vector<Row> rows;
+
+};
 
 struct ExpresionCreator {
 
 	virtual std::shared_ptr<Expression> create(const Row& row) = 0;
+	virtual std::shared_ptr<Expression> create(const MultiRow& row) = 0;
+
 };
 
 struct PredicateCreator {
 
 	virtual std::shared_ptr<Predicate> create(const Row& row) = 0;
+	virtual std::shared_ptr<Predicate> create(const MultiRow& row) = 0;
+
 };
 
 struct GreaterThanCreator : public PredicateCreator {
 	std::shared_ptr<ExpresionCreator> left;
 	std::shared_ptr<ExpresionCreator> right;
 
+	virtual std::shared_ptr<Predicate> create(const Row& row) override {
+		auto gt = std::make_shared<GreaterThan>();
+		gt->left = left->create(row);
+		gt->right = right->create(row);
+		return gt;
+	}
 
-	std::shared_ptr<Predicate> create(const Row& row) {
+	virtual std::shared_ptr<Predicate> create(const MultiRow& row) override {
 		auto gt = std::make_shared<GreaterThan>();
 		gt->left = left->create(row);
 		gt->right = right->create(row);
@@ -40,7 +54,11 @@ struct FieldValueCreator : public ExpresionCreator {
 	FieldValueCreator(FieldValueCreator&&) = default;
 
 
-	std::shared_ptr<Expression> create( const Row& row) {
+	std::shared_ptr<Expression> create(const Row& row) {
+		return row.getField(index).value();
+	}
+
+	std::shared_ptr<Expression> create(const MultiRow& row) {
 		return row.getField(index).value();
 	}
 };
@@ -80,7 +98,11 @@ struct ConstValueCreator : public ExpresionCreator {
 	ConstValueCreator(ConstValueCreator&&) = default;
 
 
-	std::shared_ptr<Expression> create(const Row& row) {
+	virtual std::shared_ptr<Expression> create(const Row& row) override {
+		return std::make_shared<Number<T>>(value);
+	}
+
+	virtual std::shared_ptr<Expression> create(const MultiRow& row) override {
 		return std::make_shared<Number<T>>(value);
 	}
 };
@@ -88,7 +110,6 @@ struct ConstValueCreator : public ExpresionCreator {
 class PredicateCreatorFactory
 {
 public:
-
 	std::shared_ptr<PredicateCreator> create(std::string expr, const Schema& schema) const {
 		//example
 		//age > 5
@@ -96,19 +117,30 @@ public:
 		auto creator = std::make_unique<GreaterThanCreator>();
 
 		auto left = expr.substr(0, gtIndex);
-		trim(left);
 
-		auto fieldIndexOpt = schema.indexOf(left);
-		if (!fieldIndexOpt) {
-			throw std::exception("No field");
+		{
+			trim(left);
+
+			auto fieldIndexOpt = schema.indexOf(left);
+			if (!fieldIndexOpt) {
+				throw std::exception("No field");
+			}
+			creator->left = std::make_shared<FieldValueCreator>(*fieldIndexOpt);
 		}
-		creator->left = std::make_shared<FieldValueCreator>(*fieldIndexOpt);
 
-		auto right = expr.substr(gtIndex + 1);
-		trim(right);
+		{
+			auto right = expr.substr(gtIndex + 1);
+			trim(right);
+			auto fieldIndexOpt = schema.indexOf(right);
+			if (fieldIndexOpt) {
+				creator->right = std::make_shared<FieldValueCreator>(*fieldIndexOpt);
+			}
+			else {
+				creator->right = std::make_shared<ConstValueCreator<int>>(right);
 
+			}
+		}
 
-		creator->right = std::make_shared<ConstValueCreator<int>>(right);
 
 		return creator;
 	}

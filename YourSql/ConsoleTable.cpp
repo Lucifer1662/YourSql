@@ -2,5 +2,5 @@
 
 Schema& ConsoleTable::getSchema()
 {
-    // TODO: insert return statement here
+    return *schema;
 }

@@ -7,6 +7,8 @@
 #include "Int32Field.h"
 #include "FixedStringField.h"
 #include <memory>
+#include "../RowConversion.h"
+struct SelectExpression;
 
 class SchemaFactory {
 public:
@@ -31,4 +33,8 @@ public:
 			)
 			);
 	}
+
+	
+	std::shared_ptr<Schema> createFromSQL(const SelectExpression& expression, RowConversion& rowConversion);
+
 };
